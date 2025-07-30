@@ -20,7 +20,5 @@ Esta es una herramienta web interactiva que te permite:
 - ✅ **Sombra sutil en cada cuadro de texto para mejor lectura**.
 - ✅ **Cuadros editables con soporte para múltiples líneas de texto**.
 
----
 
-## 📦 Estructura del Proyecto
 
