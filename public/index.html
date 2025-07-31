@@ -2,130 +2,157 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generador de Layout</title>
+  <title>Dex Layers Preview</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 20px;
-    }
-
-    #controls {
-      margin-bottom: 20px;
-    }
-
-    #controls button,
-    #fileInputLabel {
-      padding: 10px 15px;
-      margin-right: 10px;
-      background-color: #4CAF50;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(145deg, #1e1e2f, #2b2b45);
       color: white;
+    }
+
+    .controls {
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .controls input, .controls select, .controls button {
+      padding: 5px;
+      border-radius: 5px;
       border: none;
-      border-radius: 8px;
-      cursor: pointer;
       font-size: 14px;
     }
 
-    #fileInputLabel {
-      display: inline-block;
-      cursor: pointer;
+
+    .controls label {
+      font-weight: bold;
     }
 
-    #fileInput {
-      display: none;
+    .layer-controls {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px;
+    }
+
+    #layersPanel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 20px;
+      background-color: rgba(0,0,0,0.4);
     }
 
     #container {
       position: relative;
-      width: 100%;
-      max-width: 1000px;
-      height: 600px;
-      border: 2px dashed #ccc;
+      background-color: #000;
+      margin: 20px auto;
       overflow: hidden;
+      border: 2px solid #fff;
     }
 
-    #background {
+    #container video,
+    #container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       position: absolute;
       top: 0;
       left: 0;
-      max-width: 100%;
-      max-height: 100%;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
     }
 
     .text-layer {
       position: absolute;
-      color: red;
-      font-size: 18px;
+      background-color: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
       cursor: move;
-      background-color: rgba(255, 255, 255, 0.7);
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-weight: bold;
+      font-size: 20px;
+      white-space: pre-line;
+    }
+    
+    textarea {
+      resize: vertical;
+      width: 160px;
+      height: 60px;
     }
 
-    .delete-btn {
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      background: #ff5555;
-      border: none;
-      border-radius: 50%;
-      color: white;
-      width: 20px;
-      height: 20px;
-      font-size: 14px;
-      line-height: 18px;
+    input[type="number"], input[type="color"] {
+      width: 60px;
+    }
+
+    input[type="number"].sizeInput {
+      width: 50px;
+    }
+
+    button {
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .layer-controls {
-      margin-bottom: 5px;
-    }
-
-    .layer-controls input {
-      padding: 5px;
-      width: 250px;
-      margin-right: 5px;
-    }
-
-    #layers {
-      margin-top: 15px;
     }
   </style>
 </head>
 <body>
-  <div id="controls">
-    <label for="fileInput" id="fileInputLabel">Seleccionar Imagen</label>
-    <input type="file" id="fileInput" accept="image/*">
-    <button onclick="addTextLayer()">Añadir Texto</button>
+
+  <div class="controls">
+    <label>Subir imagen/video:</label>
+    <input type="file" id="fileInput" accept="image/*,video/mp4">
+    
+    <label>Aspect Ratio:</label>
+    <select id="aspectRatio">
+      <option value="16:9">16:9 (Horizontal)</option>
+      <option value="9:16" selected>9:16 (Vertical)</option>
+    </select>
+
+    <button onclick="addTextLayer()">➕ Añadir texto</button>
+
+    <label>Agregue los cuadros de texto que desee y arrastrelos para previsualizar su posicion y valores</label>
   </div>
 
-  <div id="container">
-    <img id="background" src="" alt="">
-  </div>
+  <div id="layersPanel"></div>
 
-  <div id="layers"></div>
+  <div id="container" style="width: 1080px; height: 1920px;">
+    <img id="previewImage" style="display:none;">
+    <video id="previewVideo" style="display:none;" autoplay loop muted></video>
+  </div>
 
   <script>
     const fileInput = document.getElementById('fileInput');
-    const background = document.getElementById('background');
     const container = document.getElementById('container');
-    const layersDiv = document.getElementById('layers');
+    const aspectRatio = document.getElementById('aspectRatio');
+    const previewImage = document.getElementById('previewImage');
+    const previewVideo = document.getElementById('previewVideo');
+    const layersPanel = document.getElementById('layersPanel');
     let layerId = 0;
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+    aspectRatio.addEventListener('change', () => {
+      if (aspectRatio.value === '16:9') {
+        container.style.width = '1920px';
+        container.style.height = '1080px';
+      } else {
+        container.style.width = '1080px';
+        container.style.height = '1920px';
+      }
+    });
+
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        background.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+
+      const url = URL.createObjectURL(file);
+      if (file.type.startsWith('image')) {
+        previewImage.src = url;
+        previewImage.style.display = 'block';
+        previewVideo.style.display = 'none';
+      } else {
+        previewVideo.src = url;
+        previewVideo.style.display = 'block';
+        previewImage.style.display = 'none';
+      }
     });
 
     function addTextLayer() {
@@ -133,26 +160,9 @@
       const div = document.createElement('div');
       div.className = 'text-layer';
       div.id = id;
+      div.textContent = 'Texto';
       div.style.left = '100px';
       div.style.top = '100px';
-
-      // Texto
-      const span = document.createElement('span');
-      span.textContent = 'Texto';
-
-      // Botón eliminar
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'delete-btn';
-      deleteBtn.textContent = '×';
-      deleteBtn.onclick = () => {
-        if (confirm('¿Estás seguro que querés eliminar este cuadro de texto?')) {
-          div.remove();
-          document.querySelector(`.layer-controls[data-id="${id}"]`)?.remove();
-        }
-      };
-
-      div.appendChild(span);
-      div.appendChild(deleteBtn);
       container.appendChild(div);
 
       makeDraggable(div);
@@ -162,43 +172,72 @@
     function createLayerControls(id) {
       const div = document.createElement('div');
       div.className = 'layer-controls';
-      div.dataset.id = id;
+      div.innerHTML = `
+        <strong>Layer ${id}</strong><br>
+        <textarea data-id="${id}" class="textInput">Texto</textarea><br>
+        X: <input type="number" data-id="${id}" class="inputX" value="100">
+        Y: <input type="number" data-id="${id}" class="inputY" value="100">
+        Color: <input type="color" data-id="${id}" class="colorInput" value="#ffffff">
+        Tamaño: <input type="number" data-id="${id}" class="sizeInput" value="20" min="8" max="100">
+      `;
+      layersPanel.appendChild(div);
 
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = 'Texto del cuadro';
-      input.oninput = () => updateLayer(id, input.value);
-
-      div.appendChild(input);
-      layersDiv.appendChild(div);
+      div.querySelectorAll('input, textarea').forEach(input => {
+        input.addEventListener('input', () => updateLayer(input.dataset.id));
+      });
     }
 
-    function updateLayer(id, text) {
+    function updateLayer(id) {
+      const text = document.querySelector(`.textInput[data-id="${id}"]`).value;
+      const x = document.querySelector(`.inputX[data-id="${id}"]`).value;
+      const y = document.querySelector(`.inputY[data-id="${id}"]`).value;
+      const color = document.querySelector(`.colorInput[data-id="${id}"]`).value;
+      const size = document.querySelector(`.sizeInput[data-id="${id}"]`).value;
+
       const layer = document.getElementById(id);
-      if (layer) {
-        layer.querySelector('span').textContent = text;
-      }
+      layer.textContent = text;
+      layer.style.left = `${x}px`;
+      layer.style.top = `${y}px`;
+      layer.style.color = color;
+      layer.style.fontSize = `${size}px`;
     }
 
     function makeDraggable(el) {
-      let isDragging = false, offsetX, offsetY;
+      let isDragging = false;
+      let offsetX = 0, offsetY = 0;
 
-      el.addEventListener('mousedown', (e) => {
-        if (e.target.classList.contains('delete-btn')) return; // No arrastrar al hacer clic en el botón eliminar
+      el.addEventListener('mousedown', e => {
         isDragging = true;
-        offsetX = e.offsetX;
-        offsetY = e.offsetY;
+        const rect = el.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
       });
 
-      document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-          el.style.left = `${e.pageX - container.offsetLeft - offsetX}px`;
-          el.style.top = `${e.pageY - container.offsetTop - offsetY}px`;
-        }
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
       });
 
-      document.addEventListener('mouseup', () => isDragging = false);
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+
+        const containerRect = container.getBoundingClientRect();
+
+        let x = e.clientX - containerRect.left - offsetX;
+        let y = e.clientY - containerRect.top - offsetY;
+
+        x = Math.max(0, Math.min(container.clientWidth - el.offsetWidth, x));
+        y = Math.max(0, Math.min(container.clientHeight - el.offsetHeight, y));
+
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        const id = el.id;
+        document.querySelector(`.inputX[data-id="${id}"]`).value = Math.round(x);
+        document.querySelector(`.inputY[data-id="${id}"]`).value = Math.round(y);
+      });
     }
   </script>
+
 </body>
 </html>
+  
