@@ -77,6 +77,25 @@
       white-space: pre-line;
     }
 
+
+
+    .text-layer .delete-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ff5555;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+    
     textarea {
       resize: vertical;
       width: 160px;
@@ -164,6 +183,12 @@
       div.style.left = '100px';
       div.style.top = '100px';
       container.appendChild(div);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.classList.add('delete-btn');
+      deleteBtn.innerText = '×';
+      deleteBtn.onclick = () => textLayer.remove();
+      textLayer.appendChild(deleteBtn);
 
       makeDraggable(div);
       createLayerControls(id);
