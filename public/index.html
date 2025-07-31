@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Pacifico&family=Oswald&family=Lobster&family=Inter&family=Montserrat&family=Lato&display=swap" rel="stylesheet">
+
   <meta charset="UTF-8">
   <title>Dex Layers Preview</title>
   <style>
@@ -73,7 +76,7 @@
       padding: 6px 12px;
       border-radius: 4px;
       cursor: move;
-      font-size: 40px;
+      font-size: 20px;
       white-space: pre-line;
     }
     
@@ -216,6 +219,33 @@ function addTextLayer() {
 function createLayerControls(id) {
   const div = document.createElement('div');
   div.className = 'layer-controls';
+
+  const fontOptions = `
+    <option value="Arial">Arial</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Comic Sans MS">Comic Sans MS</option>
+    <option value="Trebuchet MS">Trebuchet MS</option>
+    <option value="Impact">Impact</option>
+    <option value="Tahoma">Tahoma</option>
+    <option value="Segoe UI" selected>Segoe UI</option>
+    <option value="Calibri">Calibri</option>
+    <option value="Cambria">Cambria</option>
+    <option value="Consolas">Consolas</option>
+    <option value="Lucida Console">Lucida Console</option>
+    <option value="Roboto">Roboto</option>
+    <option value="Open Sans">Open Sans</option>
+    <option value="Pacifico">Pacifico</option>
+    <option value="Oswald">Oswald</option>
+    <option value="Lobster">Lobster</option>
+    <option value="Inter">Inter</option>
+    <option value="Montserrat">Montserrat</option>
+    <option value="Lato">Lato</option>
+
+  `;
+
   div.innerHTML = `
     <strong>Layer ${id}</strong><br>
     <textarea data-id="${id}" class="textInput">Texto</textarea><br>
@@ -223,13 +253,19 @@ function createLayerControls(id) {
     Y: <input type="number" data-id="${id}" class="inputY" value="100">
     Color: <input type="color" data-id="${id}" class="colorInput" value="#ffffff">
     Tamaño: <input type="number" data-id="${id}" class="sizeInput" value="40" min="8" max="100">
+    Fuente: 
+    <select data-id="${id}" class="fontSelect">
+      ${fontOptions}
+    </select>
   `;
+
   layersPanel.appendChild(div);
 
-  div.querySelectorAll('input, textarea').forEach(input => {
+  div.querySelectorAll('input, textarea, select').forEach(input => {
     input.addEventListener('input', () => updateLayer(id));
   });
 }
+
 
     function updateLayer(id) {
       const text = document.querySelector(`.textInput[data-id="${id}"]`).value;
@@ -237,6 +273,7 @@ function createLayerControls(id) {
       const y = document.querySelector(`.inputY[data-id="${id}"]`).value;
       const color = document.querySelector(`.colorInput[data-id="${id}"]`).value;
       const size = document.querySelector(`.sizeInput[data-id="${id}"]`).value;
+      const font = document.querySelector(`.fontSelect[data-id="${id}"]`).value;
 
       const layer = document.getElementById(id);
       layer.querySelector('.text-content').textContent = text;
@@ -244,6 +281,7 @@ function createLayerControls(id) {
       layer.style.top = `${y}px`;
       layer.style.color = color;
       layer.style.fontSize = `${size}px`;
+      layer.style.fontFamily = font;
     }
 
     function makeDraggable(el) {
