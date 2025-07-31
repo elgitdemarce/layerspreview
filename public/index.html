@@ -94,12 +94,40 @@
     button {
       cursor: pointer;
     }
+
+    .text-layer .close-btn {
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 0 5px;
+      z-index: 10;
+    }
+
+    #clear-media-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+
+
   </style>
 </head>
 <body>
 
   <div class="controls">
-    <label>Subir imagen/video:</label>
+    <label>Seleccione imagen/video:</label>
     <input type="file" id="fileInput" accept="image/*,video/mp4">
     
     <label>Aspect Ratio:</label>
@@ -111,6 +139,9 @@
     <button onclick="addTextLayer()">➕ Añadir texto</button>
 
     <label>Agregue los cuadros de texto que desee y arrastrelos para previsualizar su posicion y valores</label>
+
+    <button id="clear-media-btn">Limpiar contenido</button>
+
   </div>
 
   <div id="layersPanel"></div>
@@ -155,37 +186,50 @@
       }
     });
 
-    function addTextLayer() {
-      const id = 'layer-' + (++layerId);
-      const div = document.createElement('div');
-      div.className = 'text-layer';
-      div.id = id;
-      div.textContent = 'Texto';
-      div.style.left = '100px';
-      div.style.top = '100px';
-      container.appendChild(div);
+function addTextLayer() {
+  const id = 'layer-' + (++layerId);
+  const div = document.createElement('div');
+  div.className = 'text-layer';
+  div.id = id;
+  div.style.left = '100px';
+  div.style.top = '100px';
 
-      makeDraggable(div);
-      createLayerControls(id);
-    }
+  // Botón de cerrar
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'close-btn';
+  closeBtn.innerHTML = '❌';
+  closeBtn.onclick = () => removeLayer(id);
+  div.appendChild(closeBtn);
 
-    function createLayerControls(id) {
-      const div = document.createElement('div');
-      div.className = 'layer-controls';
-      div.innerHTML = `
-        <strong>Layer ${id}</strong><br>
-        <textarea data-id="${id}" class="textInput">Texto</textarea><br>
-        X: <input type="number" data-id="${id}" class="inputX" value="100">
-        Y: <input type="number" data-id="${id}" class="inputY" value="100">
-        Color: <input type="color" data-id="${id}" class="colorInput" value="#ffffff">
-        Tamaño: <input type="number" data-id="${id}" class="sizeInput" value="20" min="8" max="100">
-      `;
-      layersPanel.appendChild(div);
+  // Texto por defecto
+  const span = document.createElement('span');
+  span.textContent = 'Texto';
+  span.className = 'text-content';
+  div.appendChild(span);
 
-      div.querySelectorAll('input, textarea').forEach(input => {
-        input.addEventListener('input', () => updateLayer(input.dataset.id));
-      });
-    }
+  container.appendChild(div);
+
+  makeDraggable(div);
+  createLayerControls(id);
+}
+
+function createLayerControls(id) {
+  const div = document.createElement('div');
+  div.className = 'layer-controls';
+  div.innerHTML = `
+    <strong>Layer ${id}</strong><br>
+    <textarea data-id="${id}" class="textInput">Texto</textarea><br>
+    X: <input type="number" data-id="${id}" class="inputX" value="100">
+    Y: <input type="number" data-id="${id}" class="inputY" value="100">
+    Color: <input type="color" data-id="${id}" class="colorInput" value="#ffffff">
+    Tamaño: <input type="number" data-id="${id}" class="sizeInput" value="40" min="8" max="100">
+  `;
+  layersPanel.appendChild(div);
+
+  div.querySelectorAll('input, textarea').forEach(input => {
+    input.addEventListener('input', () => updateLayer(id));
+  });
+}
 
     function updateLayer(id) {
       const text = document.querySelector(`.textInput[data-id="${id}"]`).value;
@@ -195,7 +239,7 @@
       const size = document.querySelector(`.sizeInput[data-id="${id}"]`).value;
 
       const layer = document.getElementById(id);
-      layer.textContent = text;
+      layer.querySelector('.text-content').textContent = text;
       layer.style.left = `${x}px`;
       layer.style.top = `${y}px`;
       layer.style.color = color;
@@ -236,6 +280,30 @@
         document.querySelector(`.inputY[data-id="${id}"]`).value = Math.round(y);
       });
     }
+
+function removeLayer(id) {
+  const layer = document.getElementById(id);
+  if (layer) layer.remove();
+
+  // Elimina también el control asociado
+  const controls = document.querySelectorAll(`.layer-controls`);
+  controls.forEach(ctrl => {
+    if (ctrl.innerHTML.includes(`Layer ${id}`)) {
+      ctrl.remove();
+    }
+  });
+}
+
+document.getElementById("clear-media-btn").addEventListener("click", () => {
+  // Oculta imagen y video
+  previewImage.src = "";
+  previewVideo.src = "";
+  previewImage.style.display = "none";
+  previewVideo.style.display = "none";
+  fileInput.value = ""; // Limpia el input de archivo
+});
+
+
   </script>
 
 </body>
