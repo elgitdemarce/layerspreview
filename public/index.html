@@ -141,6 +141,12 @@
 
     <button onclick="addTextLayer()">➕ Añadir texto</button>
 
+      <label>Modo de imagen:</label>
+      <select id="imageMode">
+        <option value="ajustar" selected>Ajustar</option>
+        <option value="original">Mantener tamaño original</option>
+      </select>
+
     <label>Agregue los cuadros de texto que desee y arrastrelos para previsualizar su posicion y valores</label>
 
     <button id="clear-media-btn">Limpiar contenido</button>
@@ -161,6 +167,7 @@
     const previewImage = document.getElementById('previewImage');
     const previewVideo = document.getElementById('previewVideo');
     const layersPanel = document.getElementById('layersPanel');
+    const imageMode = document.getElementById('imageMode');
     let layerId = 0;
 
     aspectRatio.addEventListener('change', () => {
@@ -179,15 +186,52 @@
 
       const url = URL.createObjectURL(file);
       if (file.type.startsWith('image')) {
-        previewImage.src = url;
-        previewImage.style.display = 'block';
-        previewVideo.style.display = 'none';
+          previewImage.src = url;
+          previewImage.style.display = 'block';
+          previewVideo.style.display = 'none';
+          setImageMode();
       } else {
         previewVideo.src = url;
         previewVideo.style.display = 'block';
         previewImage.style.display = 'none';
       }
     });
+
+      imageMode.addEventListener('change', setImageMode);
+
+      function setImageMode() {
+        if (previewImage.style.display === 'none' || !previewImage.src) return;
+        if (imageMode.value === 'ajustar') {
+          previewImage.style.objectFit = 'cover';
+          previewImage.style.backgroundColor = '';
+          previewImage.style.left = '0';
+          previewImage.style.top = '0';
+          previewImage.style.width = '100%';
+          previewImage.style.height = '100%';
+          previewImage.style.position = 'absolute';
+        } else {
+          previewImage.onload = function() {
+            const contW = container.clientWidth;
+            const contH = container.clientHeight;
+            const imgW = previewImage.naturalWidth;
+            const imgH = previewImage.naturalHeight;
+            let scale = Math.min(contW / imgW, contH / imgH, 1);
+            let newW = imgW * scale;
+            let newH = imgH * scale;
+            previewImage.style.objectFit = 'none';
+            previewImage.style.backgroundColor = '#000';
+            previewImage.style.width = newW + 'px';
+            previewImage.style.height = newH + 'px';
+            previewImage.style.left = '0px';
+            previewImage.style.top = '0px';
+            previewImage.style.position = 'absolute';
+          };
+          // Si la imagen ya está cargada
+          if (previewImage.complete) {
+            previewImage.onload();
+          }
+        }
+      }
 
 function addTextLayer() {
   const id = 'layer-' + (++layerId);
